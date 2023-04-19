@@ -1,0 +1,3 @@
+C:/Users/catal/CLionProjects/ChangeOrderBits_LUT/cmake-build-debug/CMakeFiles/ChangeOrderBits_LUT.dir
+C:/Users/catal/CLionProjects/ChangeOrderBits_LUT/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/catal/CLionProjects/ChangeOrderBits_LUT/cmake-build-debug/CMakeFiles/rebuild_cache.dir
