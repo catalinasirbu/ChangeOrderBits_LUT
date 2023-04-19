@@ -2,7 +2,7 @@
 // https://github.com/catalinasirbu/ChangeOrderBits_LUT.git
 
 // Output:
-//
+// Ran in 2207852 us = 2.2 seconds
 
 // CPU used: Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz
 // gcc (x86_64-posix-seh-rev2, Built by MinGW-W64 project) 12.2.0
@@ -12,19 +12,19 @@
 #include <bitset>
 
 #define VECTOR_SIZE (100*1000*1000UL)
-uint32_t t[VECTOR_SIZE];
+alignas(64) uint32_t t[VECTOR_SIZE];
 
-#define BITARR(i, y) man |= ((u >> i) & 1) << (y - (i / 2));
-#define BITARR2(i) BITARR(i, 31);BITARR(i+1, 15);
-#define BITARR4(i) BITARR2(i); BITARR2(i+2);
-#define BITARR8(i) BITARR4(i); BITARR4(i+4);
+uint8_t lut8[256];
+
+#define BITARR(i, y) man |= lut8[(u >> i) & 0xFF] << (y - (i / 2) * 8);
+#define BITARR4(i) BITARR(i, 31); BITARR(i + 2, 23); BITARR(i + 1, 15); BITARR(i + 3, 7);
 
 static inline void swapu32(uint32_t& u) {
     uint32_t man = 0;
-    BITARR8(0);
-    BITARR8(8);
-    BITARR8(16);
-    BITARR8(24);
+    BITARR4(0);
+    BITARR4(4);
+    BITARR4(8);
+    BITARR4(12);
     u = man;
 }
 
@@ -34,14 +34,13 @@ void init() {
 }
 
 using namespace std::chrono;
-uint64_t getMilliseconds() {
-    auto now = system_clock::now();
-    auto millis = duration_cast<milliseconds>
+uint64_t getMicroseconds() {
+    auto now = high_resolution_clock::now();
+    auto micros = duration_cast<microseconds>
             (now.time_since_epoch()).count();
-    return millis;
+    return micros;
 }
 
-uint8_t lut8[256];
 void init_lut8() {
     for (int i = 0; i < 256; i++) {
         lut8[i] = 0;
@@ -65,16 +64,21 @@ int main() {
     t[0] = 3;
     std::bitset<32> bs1(t[0]);
 
-    auto tstart = getMilliseconds();
-    for (uint32_t i = 0; i < VECTOR_SIZE; i++)
-        swapu32(t[i]);
-    auto tstop = getMilliseconds();
+    init_lut8();
 
-    //t[0] = swapu32(t[0]);
+    auto tstart = getMicroseconds();
+    for (uint32_t i = 0; i < VECTOR_SIZE; i+=4) {
+        swapu32(t[i]);
+        swapu32(t[i+1]);
+        swapu32(t[i+2]);
+        swapu32(t[i+3]);
+    }
+    auto tstop = getMicroseconds();
+
     std::bitset<32> bs2(t[0]);
     std::cout << bs1 << std::endl;
     std::cout << bs2 << std::endl;
 
-    std::cout << "Ran in " << (tstop - tstart) << " ms"  << std::endl;
+    std::cout << "Ran in " << (tstop - tstart) << " us"  << std::endl;
     return 0;
 }
